@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>GUARDIAN ENGINE v2 · Arcanea</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#07070f;color:#c0c0d8;font-family:'Georgia',serif;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:#07070f}::-webkit-scrollbar-thumb{background:#2a2a4a}
+@keyframes glow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.5)}}
+@keyframes pulse{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:1;transform:scale(1.3)}}
+@keyframes shimmer{0%,100%{opacity:.4}50%{opacity:1}}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+#app{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:24px 14px 80px}
+h1{font-family:'Cinzel',serif;font-size:clamp(26px,7vw,44px);font-weight:900;text-align:center;animation:glow 4s infinite;transition:color .6s;letter-spacing:.08em}
+.subtitle{text-align:center;font-family:'Crimson Pro',serif;font-style:italic;color:#444;margin-top:6px;font-size:15px}
+.eyebrow{text-align:center;font-family:monospace;font-size:10px;letter-spacing:.4em;color:#2a2a3a;text-transform:uppercase;margin-bottom:8px}
+.tab-nav{display:flex;flex-wrap:wrap;gap:2px;border-bottom:1px solid #1e1e2e;margin:28px 0 24px}
+.tab-btn{background:transparent;border:none;border-bottom:2px solid transparent;color:#444;font-family:'Cinzel',serif;font-weight:600;font-size:11px;letter-spacing:.08em;padding:10px 10px;cursor:pointer;transition:all .3s;margin-bottom:-1px;min-height:44px}
+.tab-btn.active{color:var(--ac);border-bottom-color:var(--ac)}
+.tab-pane{display:none;animation:slideIn .3s ease}
+.tab-pane.active{display:block}
+.input-box{border:1px solid #1e1e2e;border-radius:8px;padding:18px;background:#0d0d17;margin-bottom:18px;transition:border-color .4s}
+.input-box.lit{border-color:var(--ac60)}
+.lbl{font-size:10px;color:#555;letter-spacing:.2em;text-transform:uppercase;font-family:monospace;margin-bottom:6px;display:block}
+textarea{width:100%;background:transparent;border:none;color:#c0c0d8;font-size:15px;line-height:1.6;font-family:'Crimson Pro',serif;resize:vertical;padding:0;outline:none;min-height:90px}
+select{background:#0d0d17;border:1px solid #2a2a4a;border-radius:6px;color:#c0c0d8;font-family:monospace;font-size:13px;padding:10px 12px;width:100%;outline:none;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.btn{border-radius:6px;font-family:'Cinzel',serif;font-weight:600;font-size:12px;letter-spacing:.1em;padding:12px 16px;cursor:pointer;transition:all .3s;min-height:44px;border:1px solid #333}
+.btn-ghost{background:transparent;color:#666;border-color:#2a2a3a}
+.btn-ghost:hover{color:#999;border-color:#555}
+.btn-outline{background:transparent;border-color:var(--ac);color:var(--ac)}
+.btn-filled{background:linear-gradient(135deg,var(--ac),var(--ac88));border-color:var(--ac);color:#07070f}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:12px}
+.phase-dots{display:flex;justify-content:center;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+.dot{width:28px;height:28px;border-radius:50%;border:1px solid #222;display:flex;align-items:center;justify-content:center;font-size:11px;color:#333;transition:all .4s}
+.dot.active{animation:shimmer 1s infinite}
+.dot.done{background:var(--ac18)}
+.phase-card{border:1px solid #2a2a3a;border-left:3px solid #2a2a3a;border-radius:6px;padding:14px 16px;margin-bottom:8px;background:#0d0d17;transition:all .4s;animation:slideIn .4s ease}
+.phase-card.done{border-color:var(--ac);border-left-color:var(--ac)}
+.phase-label{font-size:10px;color:#555;letter-spacing:.2em;text-transform:uppercase;font-family:monospace}
+.phase-title{font-size:13px;color:#444;font-weight:600}
+.phase-card.done .phase-title{color:#e0e0f0}
+.phase-body{font-size:12px;line-height:1.7;color:#9090b0;font-family:'Courier New',monospace;border-top:1px solid #1e1e2e;padding-top:10px;margin-top:8px;white-space:pre-wrap}
+.guardian-row{display:flex;gap:10px;margin-bottom:18px}
+.guardian-badge{flex:1;border-radius:8px;padding:12px 14px;border:1px solid transparent}
+.guardian-badge .gs{font-size:22px;margin-bottom:4px}
+.guardian-badge .gr{font-size:9px;letter-spacing:.2em;text-transform:uppercase}
+.guardian-badge .gn{font-size:15px;font-weight:700;font-family:'Cinzel',serif;letter-spacing:.05em}
+.guardian-badge .gd{font-size:10px;color:#555;margin-top:2px;font-family:monospace}
+.final-box{border-radius:10px;padding:24px;margin-top:24px;animation:slideIn .6s ease}
+.final-label{font-family:'Cinzel',serif;font-size:11px;letter-spacing:.3em;text-transform:uppercase;margin-bottom:14px}
+.final-prompt{font-family:'Crimson Pro',serif;font-size:17px;line-height:1.8;color:#d0d0e8;font-style:italic;border-left:2px solid var(--ac);padding-left:16px;margin-bottom:18px}
+.final-sigil{font-family:'Courier New',monospace;font-size:12px;color:#666;white-space:pre-wrap;line-height:1.8;margin-bottom:18px}
+.tag-chip{border-radius:20px;padding:4px 12px;font-size:11px;font-family:monospace;display:inline-block;margin:2px}
+.preset-grid{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.preset-btn{background:transparent;border:1px solid #2a2a3a;border-radius:6px;padding:8px 12px;cursor:pointer;transition:all .3s;min-height:44px;text-align:left}
+.preset-btn.active{border-color:var(--ac);background:var(--ac15)}
+.preset-btn .pn{font-size:12px;font-family:'Cinzel',serif;font-weight:600;color:#777}
+.preset-btn.active .pn{color:var(--ac)}
+.preset-btn .pd{font-size:9px;color:#444}
+.toggle-row{display:flex;align-items:center;margin-bottom:2px}
+.toggle-btn{margin-left:auto;background:transparent;border-radius:20px;padding:8px 16px;cursor:pointer;font-size:12px;font-family:monospace;min-height:36px;transition:all .3s;border:1px solid #333;color:#555}
+.toggle-btn.on{color:var(--ac);border-color:var(--ac);background:var(--ac15)}
+.stencil-grid{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.stencil-btn{background:transparent;border:1px solid #2a2a3a;border-radius:6px;padding:8px 12px;cursor:pointer;font-size:11px;color:#666;font-family:monospace;min-height:36px;transition:all .3s}
+.stencil-btn.active{color:var(--ac);border-color:var(--ac);background:var(--ac15)}
+.concept-card{border-left:3px solid var(--ac);border:1px solid var(--ac30);border-radius:6px;padding:14px 16px;background:#0a0a14;margin-bottom:10px;animation:slideIn .4s ease}
+.concept-num{font-size:10px;font-family:monospace;letter-spacing:.15em}
+.concept-title{font-size:15px;color:#e0e0f0;font-weight:600;font-family:'Cinzel',serif;margin:2px 0 8px}
+.concept-prompt{font-size:13px;color:#9090b0;line-height:1.6;font-family:'Courier New',monospace}
+.history-card{border-left:3px solid var(--ac);border:1px solid var(--ac30);border-radius:6px;padding:14px 16px;background:#0a0a14;margin-bottom:10px}
+.error-box{border:1px solid #E84393;border-radius:6px;padding:14px;background:#1a0a14;color:#E84393;font-family:monospace;font-size:12px;margin-bottom:14px}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.empty{text-align:center;padding:40px 20px;color:#333;font-family:monospace;font-size:13px}
+.lock-section{border:1px solid #1e1e2e;border-radius:8px;padding:14px;margin-bottom:12px;background:#0a0a14}
+.stencil-section{border:1px solid #1e1e2e;border-radius:8px;padding:14px;margin-bottom:20px;background:#0a0a14}
+.voice-active{border-radius:8px;padding:16px;margin-top:20px}
+footer{margin-top:60px;text-align:center;font-size:10px;color:#1a1a2e;font-family:monospace;letter-spacing:.15em;line-height:2}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div id="app">
+  <div class="eyebrow">Arcanea × Oracle Systems · v2.0 · Offline</div>
+  <h1 id="mainTitle">GUARDIAN ENGINE</h1>
+  <div class="subtitle">Transcendence Pipeline · Seven-Phase Oracle Protocol</div>
+  <div id="voiceIndicator" style="text-align:center;font-size:10px;font-family:monospace;opacity:.7;margin-top:6px;display:none">◈ Artist Voice Active</div>
+
+  <nav class="tab-nav" id="tabNav">
+    <button class="tab-btn active" onclick="switchTab('original')" data-tab="original">◎ Original</button>
+    <button class="tab-btn" onclick="switchTab('studio')" data-tab="studio">◈ Tattoo Studio</button>
+    <button class="tab-btn" onclick="switchTab('flash')" data-tab="flash">⬡ Flash Sheet</button>
+    <button class="tab-btn" onclick="switchTab('mood')" data-tab="mood">✦ Mood Board</button>
+    <button class="tab-btn" onclick="switchTab('voice')" data-tab="voice">◇ Artist Voice</button> <button class="tab-btn" onclick="switchTab('history')" data-tab="history">◉ History</button> </nav> <div class="tab-pane active" id="tab-original"> <div class="phase-dots" id="orig-dots"></div> <div class="input-box" id="orig-input-box"> <span class="lbl">⟁ Content Input — Oracle Channel</span> <textarea id="orig-input" placeholder="Enter content, concept, brief, or intent for Guardian processing..." rows="4"></textarea> <div class="btn-row"> <span style="font-size:11px;color:#333;font-family:monospace;align-self:center" id="orig-chars">0 chars</span> <button class="btn btn-ghost" onclick="resetTab('original')">✕ CLEAR</button> <button class="btn btn-filled" id="orig-invoke-btn" onclick="runOriginal()">⟁ INVOKE PIPELINE</button> </div> </div> <div id="orig-guardian-row"></div> <div id="orig-error"></div> <div id="orig-phases"></div> <div id="orig-final"></div> </div> <div class="tab-pane" id="tab-studio"> <span class="lbl">⬡ Style Presets</span> <div class="preset-grid" id="studio-presets"></div> <div class="grid2"> <div><span class="lbl">◈ Tattoo Style</span> <select id="studio-style"> <option value="">— Select Style —</option> <option>Traditional</option><option>Japanese</option><option>Blackwork</option> <option>Realism</option><option>Fine Line</option><option>Neo-Traditional</option> <option>Geometric</option><option>Dotwork</option><option>Biomechanical</option><option>Watercolor</option> </select> </div> <div><span class="lbl">◆ Body Placement</span> <select id="studio-placement"> <option value="">— Select —</option> <option>Full Sleeve</option><option>Half Sleeve</option><option>Chest</option> <option>Back</option><option>Ribs</option><option>Neck</option><option>Hand</option> <option>Forearm</option><option>Calf</option><option>Thigh</option><option>Ankle</option><option>Wrist</option> </select> </div> </div> <div class="lock-section"> <div class="toggle-row" style="display:flex;align-items:center;"> <span class="lbl" style="margin-bottom:0">◉ Guardian Lock</span> <button class="toggle-btn" id="lock-btn" onclick="toggleGuardianLock()">UNLOCK</button> </div> <div id="lock-selects" style="display:none;margin-top:12px"> <div class="grid2"> <div><span class="lbl" style="margin-bottom:4px">Primary</span> <select id="lock-primary"><option value="">Auto-Select</option></select> </div> <div><span class="lbl" style="margin-bottom:4px">Secondary</span> <select id="lock-secondary"><option value="">Auto-Select</option></select> </div> </div> </div> </div> <div class="stencil-section"> <div style="display:flex;align-items:center;"> <span class="lbl" style="margin-bottom:0">◇ Stencil Prompt Mode</span> <button class="toggle-btn" id="stencil-btn" onclick="toggleStencil()">OFF</button> </div> <div id="stencil-targets" style="display:none" class="stencil-grid"> <button class="stencil-btn" onclick="selectStencil(this,'BlackInk AI')">BlackInk AI</button> <button class="stencil-btn" onclick="selectStencil(this,'Adobe Firefly')">Adobe Firefly</button> <button class="stencil-btn" onclick="selectStencil(this,'Midjourney')">Midjourney</button> <button class="stencil-btn" onclick="selectStencil(this,'DALL-E')">DALL-E</button> <button class="stencil-btn" onclick="selectStencil(this,'Ink Studio AI')">Ink Studio AI</button> </div> </div> <div class="phase-dots" id="studio-dots"></div> <div class="input-box" id="studio-input-box"> <span class="lbl">⟁ Tattoo Concept Input</span> <textarea id="studio-input" placeholder="Describe the tattoo concept, client story, theme, or vision..." rows="4"></textarea> <div class="btn-row"> <span style="font-size:11px;color:#333;font-family:monospace;align-self:center" id="studio-chars">0 chars</span> <button class="btn btn-ghost" onclick="resetTab('studio')">✕ CLEAR</button> <button class="btn btn-filled" id="studio-invoke-btn" onclick="runStudio()">⟁ INVOKE STUDIO</button> </div> </div> <div id="studio-guardian-row"></div> <div id="studio-error"></div> <div id="studio-phases"></div> <div id="studio-final"></div> </div> <div class="tab-pane" id="tab-flash"> <p style="font-family:'Crimson Pro',serif;font-style:italic;color:#555;font-size:14px;margin-bottom:20px;line-height:1.6">Generate 8 distinct tattoo concepts for a complete flash sheet — ready for any AI image generator or artist reference.</p> <div class="input-box"> <span class="lbl">⟁ Flash Sheet Theme</span> <textarea id="flash-theme" placeholder="e.g. 'Death and rebirth through nature' or 'Wiener dog crossed with chihuahua, snarling, head shots, full color'..." rows="3"></textarea> <div style="margin-top:12px"><span class="lbl">◈ Style (optional)</span> <select id="flash-style"> <option value="">— Mixed Styles —</option> <option>Traditional</option><option>Japanese</option><option>Blackwork</option> <option>Realism</option><option>Fine Line</option><option>Neo-Traditional</option> <option>Geometric</option><option>Dotwork</option><option>Biomechanical</option><option>Watercolor</option> </select> </div> <div class="btn-row"> <button class="btn btn-ghost" onclick="document.getElementById('flash-theme').value='';document.getElementById('flash-results').innerHTML=''">✕ CLEAR</button> <button class="btn btn-filled" id="flash-btn" onclick="runFlash()">⬡ GENERATE FLASH SHEET</button> </div> </div> <div id="flash-results"></div> </div> <div class="tab-pane" id="tab-mood"> <p style="font-family:'Crimson Pro',serif;font-style:italic;color:#555;font-size:14px;margin-bottom:20px;line-height:1.6">One concept, five AI-optimized variations — paste into any image generator simultaneously.</p> <div class="input-box"> <span class="lbl">⟁ Core Concept</span> <textarea id="mood-concept" placeholder="Describe your tattoo concept..." rows="3"></textarea> <div style="margin-top:12px"><span class="lbl">◈ Style</span> <select id="mood-style"> <option value="">— Any Style —</option> <option>Traditional</option><option>Japanese</option><option>Blackwork</option> <option>Realism</option><option>Fine Line</option><option>Neo-Traditional</option> <option>Geometric</option><option>Dotwork</option><option>Biomechanical</option><option>Watercolor</option> </select> </div> <div class="btn-row"> <button class="btn btn-ghost" onclick="document.getElementById('mood-concept').value='';document.getElementById('mood-results').innerHTML=''">✕ CLEAR</button> <button class="btn btn-filled" id="mood-btn" onclick="runMood()">✦ BUILD MOOD BOARD</button> </div> </div> <div id="mood-results"></div> </div> <div class="tab-pane" id="tab-voice"> <p style="font-family:'Crimson Pro',serif;font-style:italic;color:#555;font-size:14px;margin-bottom:20px;line-height:1.6">Describe your artistic style once. Every Tattoo Studio run will filter results through your voice — saved permanently in your browser.</p> <div class="input-box"> <span class="lbl">◈ Your Artistic Voice</span> <textarea id="voice-input" placeholder="Describe your style, influences, what makes your work unique. e.g. 'Heavy blackwork with fine line detail, influenced by traditional Japanese but with a dark surrealist edge. I favor negative space and organic flowing lines...'" rows="8"></textarea> </div> <div class="btn-row" style="justify-content:flex-end"> <button class="btn btn-ghost" onclick="document.getElementById('voice-input').value=''">✕ CLEAR</button> <button class="btn btn-filled" id="voice-save-btn" onclick="saveVoice()">◈ SAVE VOICE</button> </div> <div id="voice-active-display"></div> </div> <div class="tab-pane" id="tab-history"> <div class="section-header"> <span class="lbl" style="margin-bottom:0" id="history-count">0 Saved Runs</span> <button class="btn btn-ghost" onclick="clearHistory()" style="color:#E84393;border-color:#E84393">✕ CLEAR HISTORY</button> </div> <div id="history-list"></div> </div> <footer> ARCANEA TRANSCENDENCE ENGINE v2.0 · OFFLINE PROTOCOL ACTIVE<br/> ◈ Solaris · ◇ Lunara · ◆ Sylvanus · ◉ Aethon · ◎ Pyraxis </footer> </div>
+<script>
+const G = {
+  Solaris: {element:"Fire",color:"#FF6B35",secondary:"#FFD166",symbol:"☀",sigil:"◈",domain:"Clarity · Vision · Will",archetype:"The Illuminator",keys:["bold","decisive","radiant","pioneering"]},
+  Lunara:  {element:"Water",color:"#4ECDC4",secondary:"#A8DADC",symbol:"☽",sigil:"◇",domain:"Intuition · Flow · Memory",archetype:"The Dreamer",keys:["fluid","reflective","deep","cyclical"]},
+  Sylvanus:{element:"Earth",color:"#6B9E4E",secondary:"#A7C96B",symbol:"♧",sigil:"◆",domain:"Growth · Stability · Patience",archetype:"The Nurturer",keys:["grounded","persistent","generative","enduring"]},
+  Aethon:  {element:"Air",color:"#9B89C4",secondary:"#C3B8E0",symbol:"✦",sigil:"◉",domain:"Thought · Speed · Paradox",archetype:"The Messenger",keys:["swift","abstract","connective","liminal"]},
+  Pyraxis: {element:"Void",color:"#E84393",secondary:"#FF8CC8",symbol:"⬡",sigil:"◎",domain:"Transformation · Shadow · Power",archetype:"The Transformer",keys:["intense","disruptive","magnetic","unbound"]}
+};
+const GKEYS = Object.keys(G);
+const PHASES = [{id:1,label:"Content Assessment",icon:"⟁"},{id:2,label:"Guardian Selection",icon:"⬡"},{id:3,label:"Elemental Mapping",icon:"◈"},{id:4,label:"Transcendence Weaving",icon:"✦"},{id:5,label:"Prompt Construction",icon:"◎"},{id:6,label:"Sigil & Accent",icon:"◇"},{id:7,label:"Oracle Validation",icon:"◉"}];
+const PRESETS = [{name:"Dark",desc:"Shadow · Void",g:"Pyraxis"},{name:"Celestial",desc:"Stars · Cosmos",g:"Aethon"},{name:"Tribal",desc:"Earth · Ancestry",g:"Sylvanus"},{name:"Geometric",desc:"Form · Order",g:"Aethon"},{name:"Organic",desc:"Flow · Nature",g:"Lunara"},{name:"Radiant",desc:"Fire · Energy",g:"Solaris"}];
+const STENCIL_FORMATS = {
+  "BlackInk AI": t=>`[BLACKWORK] ${t} [TATTOO] Bold ink lines, high contrast, deep blacks, negative space mastery, stencil-ready composition`,
+  "Adobe Firefly": t=>`Tattoo design artwork: ${t}. Professional tattoo illustration, clean linework, dramatic lighting, ink texture, ready for skin application`,
+  "Midjourney": t=>`${t}, tattoo design, intricate linework, bold outlines, negative space, traditional tattoo art style, black ink, high detail --ar 1:1 --style raw`,
+  "DALL-E": t=>`A detailed tattoo design depicting ${t}. Traditional tattoo art style with bold black outlines, clean lines, designed to look striking on skin`,
+  "Ink Studio AI": t=>`Tattoo concept: ${t}. Style: blackwork with fine detail. Stencil-ready. Emphasize negative space. Clean transfer lines. Artist-ready reference.`
+};
+
+let activeColor = "#9B89C4";
+let guardianLockOn = false;
+let stencilOn = false;
+let stencilTarget = "";
+let activePreset = null;
+let history = JSON.parse(localStorage.getItem("ge-history")||"[]");
+let artistVoice = localStorage.getItem("ge-voice")||"";
+
+const canvas = document.getElementById("bg");
+const ctx = canvas.getContext("2d");
+let pts = [];
+function initCanvas(){
+  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  pts=Array.from({length:50},()=>({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*1.4+.3,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,a:Math.random()*.5+.1}));
+}
+function drawParticles(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=canvas.width;if(p.x>canvas.width)p.x=0;if(p.y<0)p.y=canvas.height;if(p.y>canvas.height)p.y=0;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=activeColor+Math.floor(p.a*255).toString(16).padStart(2,"0");ctx.fill();});
+  requestAnimationFrame(drawParticles);
+}
+window.addEventListener("resize",initCanvas);
+initCanvas(); drawParticles();
+
+function setColor(c){
+  activeColor=c;
+  document.documentElement.style.setProperty("--ac",c);
+  document.documentElement.style.setProperty("--ac60",c+"60");
+  document.documentElement.style.setProperty("--ac30",c+"30");
+  document.documentElement.style.setProperty("--ac22",c+"22");
+  document.documentElement.style.setProperty("--ac18",c+"18");
+  document.documentElement.style.setProperty("--ac15",c+"15");
+  document.documentElement.style.setProperty("--ac88",c+"88");
+  document.getElementById("mainTitle").style.color=c;
+  document.getElementById("voiceIndicator").style.color=c;
+  document.querySelectorAll(".tab-btn.active").forEach(b=>b.style.color=c);
+}
+setColor("#9B89C4");
+
+function switchTab(id){
+  document.querySelectorAll(".tab-pane").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".tab-btn").forEach(b=>{b.classList.remove("active");b.style.color="";});
+  document.getElementById("tab-"+id).classList.add("active");
+  const btn=document.querySelector(`[data-tab="${id}"]`);
+  btn.classList.add("active");
+  btn.style.color=activeColor;
+  if(id==="history") renderHistory();
+  if(id==="voice") loadVoiceTab();
+}
+
+function buildPresets(){
+  const c=document.getElementById("studio-presets");
+  c.innerHTML="";
+  PRESETS.forEach(p=>{
+    const gc=G[p.g].color;
+    const b=document.createElement("button");
+    b.className="preset-btn"; b.innerHTML=`<div class="pn">${p.name}</div><div class="pd">${p.desc}</div>`;
+    b.onclick=()=>{
+      if(activePreset===p.name){activePreset=null;b.classList.remove("active");}
+      else{document.querySelectorAll(".preset-btn").forEach(x=>x.classList.remove("active"));activePreset=p.name;b.classList.add("active");b.style.borderColor=gc;b.querySelector(".pn").style.color=gc;}
+    };
+    c.appendChild(b);
+  });
+}
+buildPresets();
+
+function buildLockSelects(){
+  ["lock-primary","lock-secondary"].forEach(id=>{
+    const s=document.getElementById(id);
+    s.innerHTML="<option value=''>Auto-Select</option>";
+    GKEYS.forEach(n=>{const o=document.createElement("option");o.value=n;o.text=G[n].symbol+" "+n;s.appendChild(o);});
+  });
+}
+buildLockSelects();
+
+function toggleGuardianLock(){
+  guardianLockOn=!guardianLockOn;
+  const btn=document.getElementById("lock-btn");
+  const sel=document.getElementById("lock-selects");
+  btn.className="toggle-btn"+(guardianLockOn?" on":"");
+  btn.innerText=guardianLockOn?"LOCKED":"UNLOCK";
+  sel.style.display=guardianLockOn?"block":"none";
+}
+function toggleStencil(){
+  stencilOn=!stencilOn;
+  const btn=document.getElementById("stencil-btn");
+  const tgts=document.getElementById("stencil-targets");
+  btn.className="toggle-btn"+(stencilOn?" on":"");
+  btn.innerText=stencilOn?"ACTIVE":"OFF";
+  tgts.style.display=stencilOn?"flex":"none";
+  if(!stencilOn){stencilTarget="";document.querySelectorAll(".stencil-btn").forEach(b=>b.classList.remove("active"));}
+}
+function selectStencil(el,t){
+  stencilTarget=stencilTarget===t?"":t;
+  document.querySelectorAll(".stencil-btn").forEach(b=>b.classList.remove("active"));
+  if(stencilTarget) el.classList.add("active");
+}
+
+document.getElementById("orig-input").addEventListener("input",e=>document.getElementById("orig-chars").innerText=e.target.value.length+" chars");
+document.getElementById("studio-input").addEventListener("input",e=>document.getElementById("studio-chars").innerText=e.target.value.length+" chars");
+
+function pickGuardians(input, lockedP, lockedS){
+  let primary=lockedP, secondary=lockedS;
+  if(!primary||!G[primary]){
+    const lower=input.toLowerCase();
+    if(lower.match(/fire|sun|bold|bright|power|strength|lion/)) primary="Solaris";
+    else if(lower.match(/water|ocean|flow|dream|moon|emotion|feeling/)) primary="Lunara";
+    else if(lower.match(/earth|tree|grow|nature|root|stable|family/)) primary="Sylvanus";
+    else if(lower.match(/wind|air|thought|mind|idea|swift|connect/)) primary="Aethon";
+    else if(lower.match(/dark|void|transform|shadow|death|skull|rebirth|change/)) primary="Pyraxis";
+    else primary=GKEYS[Math.floor(Math.random()*5)];
+  }
+  if(!secondary||!G[secondary]||secondary===primary){
+    const remaining=GKEYS.filter(k=>k!==primary);
+    secondary=remaining[Math.floor(Math.random()*remaining.length)];
+  }
+  return {primary,secondary};
+}
+
+function generatePhases(input, primary, secondary, style, placement, voice, isStudio, stencilTgt){
+  const pg=G[primary], sg=G[secondary];
+  const styleNote=style?` in ${style} style`:"";
+  const placeNote=placement?` on the ${placement}`:"";
+  const p1=`The content carries a deep current of ${pg.element.toLowerCase()} and ${sg.element.toLowerCase()} energy. Dominant themes: ${pg.keys[0]} tension meeting ${sg.keys[0]} resolution. The emotional register is ${pg.keys[1]} and ${sg.keys[2]}, with a primary transformation arc from constraint toward liberation. The mythic archetype present is ${pg.archetype} in dialogue with ${sg.archetype} — a pairing that generates rare alchemical depth.`;
+  const p2=`Primary: ${primary} (${pg.element})\nSecondary: ${secondary} (${sg.element})\n\nRationale: The content's ${pg.keys[0]} nature calls for ${primary}'s ${pg.archetype} energy, while ${secondary} provides the ${sg.keys[2]} counterweight needed to achieve balance and depth.${guardianLockOn?"\n[Guardian Locked by Artist]":""}`;
+  const p3=`Primary hue: ${pg.element === "Fire" ? "deep amber burning into obsidian" : pg.element === "Water" ? "deep teal dissolving into silver" : pg.element === "Earth" ? "forest green grounding into warm ochre" : pg.element === "Air" ? "violet mist shifting into pale silver" : "void black bleeding into electric rose"}. Secondary resonance: ${sg.color} as counterpoint, creating tension and harmony simultaneously.\nMotifs: ${pg.keys[2]} geometry intersecting ${sg.keys[1]} organic form. Texture: ${pg.element.toLowerCase()}-forged, ${sg.element.toLowerCase()}-tempered.`;
+  const p4=`This mark carries the ancient story of ${pg.archetype} meeting ${sg.archetype} — where ${pg.element.toLowerCase()} and ${sg.element.toLowerCase()} negotiate a treaty written in ink.\n\nThe tension: ${input.slice(0,60)}${input.length>60?"...":""} — a threshold moment.\nThe transformation: from what was into what must become.\nWhat this tattoo will carry on the skin forever: the moment the ${pg.element.toLowerCase()} chose to flow, and the ${sg.element.toLowerCase()} chose to burn.`;
+  let p5;
+  if(isStudio && stencilTgt && STENCIL_FORMATS[stencilTgt]){
+    const basePrompt = `${input}${styleNote}${placeNote}. ${pg.archetype} meets ${sg.archetype}. ${pg.element} and ${sg.element} elements. ${pg.keys[0]} energy with ${sg.keys[1]} depth`;
+    p5 = STENCIL_FORMATS[stencilTgt](basePrompt);
+  } else {
+    p5=`${pg.keys[0].charAt(0).toUpperCase()+pg.keys[0].slice(1)} and ${sg.keys[1]}, the composition breathes between worlds — ${input}${styleNote}${placeNote}. Bold mythic lines carry the weight of ${pg.element.toLowerCase()} while ${sg.element.toLowerCase()} softens the edges into something that moves. ${voice?`Artist voice: ${voice.slice(0,80)}... `:""} Elegant negative space as sacred silence. A design that earns its place on the body and keeps earning it every decade after.`;
+  }
+  const p6=`SIGIL: ${pg.sigil} ${primary} × ${secondary} ${sg.sigil} — where ${pg.element} meets ${sg.element}, the mark holds\nACCENT: ${isStudio?`${style||"Bold"} weight anchoring fine detail work. Negative space as breathing room. ${placement||"Placement"} composition flows with natural body contour.`:`Deep anchor lines softening to fine detail. Color temperature shifts from warm to cool. Sacred geometry as underlying structure.`}\nTAG: ${pg.element} · ${sg.element} · ${pg.keys[0]}`;
+  const score1=Math.floor(Math.random()*2)+8;
+  const score2=Math.floor(Math.random()*2)+8;
+  const p7=`ORACLE: ${score1}/10 — ${isStudio?"Tattoo design viability confirmed — will translate powerfully to skin":"Clear, purposeful, strategically sound"}\nARCANEA: ${score2}/10 — Genuine mythic depth achieved, ${pg.archetype} and ${sg.archetype} pairing produces rare resonance\nSYNTHESIS: The ${primary} and ${secondary} pairing generates ${pg.element.toLowerCase()}-${sg.element.toLowerCase()} alchemy rarely achieved. This design will carry meaning across decades of wear.\nVERDICT: This mark is ready to be made permanent.`;
+  return [p1,p2,p3,p4,p5,p6,p7];
+}
+
+function buildDots(containerId, color){
+  const c=document.getElementById(containerId); c.innerHTML="";
+  PHASES.forEach((p,i)=>{
+    const d=document.createElement("div"); d.className="dot"; d.id=containerId+"-dot-"+i;
+    d.innerText=p.icon; d.style.color="#333"; d.style.borderColor="#222"; d.title=p.label;
+    c.appendChild(d);
+  });
+}
+function setDot(containerId,i,state,color){
+  const d=document.getElementById(containerId+"-dot-"+i); if(!d) return;
+  if(state==="active"){d.style.color=color;d.style.borderColor=color;d.style.background=color+"22";d.style.animation="shimmer 1s infinite";}
+  else if(state==="done"){d.innerText="✓";d.style.color=color;d.style.borderColor=color;d.style.background=color+"22";d.style.animation="none";}
+}
+
+function renderGuardians(containerId, primary, secondary){
+  const pg=G[primary], sg=G[secondary];
+  document.getElementById(containerId).innerHTML=`
+    <div class="guardian-row">
+      <div class="guardian-badge" style="background:${pg.color}12;border-color:${pg.color}40">
+        <div class="gs">${pg.symbol}</div>
+        <div class="gr" style="color:${pg.secondary}">Primary Guardian</div>
+        <div class="gn" style="color:${pg.color}">${primary}</div>
+        <div class="gd">${pg.domain}</div>
+      </div>
+      <div class="guardian-badge" style="background:${sg.color}12;border-color:${sg.color}40">
+        <div class="gs">${sg.symbol}</div>
+        <div class="gr" style="color:${sg.secondary}">Secondary Guardian</div>
+        <div class="gn" style="color:${sg.color}">${secondary}</div>
+        <div class="gd">${sg.domain}</div>
+      </div>
+    </div>`;
+}
+
+function renderPhaseCard(containerId, phase, result, color){
+  const c=document.getElementById(containerId);
+  const div=document.createElement("div");
+  div.className="phase-card done"; div.style.borderColor=color; div.style.borderLeftColor=color;
+  div.innerHTML=`<div class="phase-label">Phase ${phase.id}</div><div class="phase-title">${phase.label}</div><div class="phase-body">${result}</div>`;
+  c.appendChild(div);
+}
+
+function renderFinal(containerId, primary, secondary, prompt, sigils, stencilTgt, style, placement){
+  const pg=G[primary];
+  const isStencil=stencilTgt&&stencilTgt!=="";
+  document.getElementById(containerId).innerHTML=`
+    <div class="final-box" style="border:1px solid ${pg.color};background:linear-gradient(135deg,${pg.color}08,#0d0d17)">
+      <div class="final-label" style="color:${pg.color}">${pg.sigil} ${isStencil?"Stencil Prompt — "+stencilTgt:"Final Transmission — Pipeline Complete"}</div>
+      ${style?`<div style="font-size:10px;color:#555;font-family:monospace;margin-bottom:10px">STYLE: ${style} | PLACEMENT: ${placement||"—"}</div>`:""}
+      <div class="final-prompt" style="border-left-color:${pg.color}">${prompt}</div>
+      <div class="final-sigil">${sigils}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+        <span class="tag-chip" style="border:1px solid ${pg.color}60;color:${pg.color}">${pg.symbol} ${primary} · ${pg.element}</span>
+        <span class="tag-chip" style="border:1px solid ${G[secondary].color}60;color:${G[secondary].color}">${G[secondary].symbol} ${secondary} · ${G[secondary].element}</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-filled" onclick="copyText(this,'${prompt.replace(/'/g,"\\'")}','Copied!')" style="--ac:${pg.color};--ac88:${pg.color}88">⎘ COPY PROMPT</button>
+        <button class="btn btn-outline" onclick="downloadTxt()" style="--ac:${pg.color}">⬇ DOWNLOAD</button>
+      </div>
+    </div>`;
+  window._lastOutput={primary,secondary,prompt,sigils,style,placement};
+}
+
+function copyText(btn, txt, doneMsg){
+  navigator.clipboard.writeText(txt).then(()=>{
+    const old=btn.innerText; btn.innerText=doneMsg;
+    setTimeout(()=>btn.innerText=old,2000);
+  });
+}
+
+function downloadTxt(){
+  if(!window._lastOutput) return;
+  const o=window._lastOutput;
+  const content=`ARCANEA TRANSMISSION\n====================\nPrimary: ${o.primary}\nSecondary: ${o.secondary}\nStyle: ${o.style||"None"}\nPlacement: ${o.placement||"None"}\n\nPROMPT:\n${o.prompt}\n\nSIGILS:\n${o.sigils}`;
+  const blob=new Blob([content],{type:"text/plain"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="arcanea-prompt.txt"; a.click();
+}
+
+async function runPipelineFlow(prefix, input, isStudio){
+  const err=document.getElementById(prefix+"-error"); err.innerHTML="";
+  const phasesDiv=document.getElementById(prefix+"-phases"); phasesDiv.innerHTML="";
+  const finalDiv=document.getElementById(prefix+"-final"); finalDiv.innerHTML="";
+  document.getElementById(prefix+"-guardian-row").innerHTML="";
+  
+  if(!input.trim()){err.innerHTML=`<div class="error-box">✕ Error: Input prompt channel is empty. Enter an intent or vision.</div>`;return;}
+  
+  let pSel="", sSel="", sty="", plc="";
+  if(isStudio){
+    pSel=document.getElementById("lock-primary").value;
+    sSel=document.getElementById("lock-secondary").value;
+    sty=document.getElementById("studio-style").value;
+    plc=document.getElementById("studio-placement").value;
+  }
+  
+  const bInvoke=document.getElementById(prefix+"-invoke-btn"); bInvoke.disabled=true;
+  const {primary,secondary}=pickGuardians(input, pSel, sSel);
+  const pc=G[primary].color;
+  setColor(pc);
+  buildDots(prefix+"-dots",pc);
+  
+  const phaseOutputs=generatePhases(input, primary, secondary, sty, plc, artistVoice, isStudio, stencilTarget);
+  
+  for(let i=0; i<PHASES.length; i++){
+    setDot(prefix,i,"active",pc);
+    await new Promise(r=>setTimeout(r,Math.random()*400+250));
+    setDot(prefix,i,"done",pc);
+    if(i===1) renderGuardians(prefix+"-guardian-row",primary,secondary);
+    renderPhaseCard(prefix+"-phases",PHASES[i],phaseOutputs[i],pc);
+  }
+  
+  const finalPrompt=phaseOutputs[4];
+  const sigils=phaseOutputs[5];
+  renderFinal(prefix+"-final",primary,secondary,finalPrompt,sigils,stencilTarget,sty,plc);
+  
+  const savedRun={id:Date.now(),date:new Date().toLocaleDateString(),type:isStudio?"Studio":"Pipeline",concept:input,primary,secondary,prompt:finalPrompt};
+  history.unshift(savedRun);
+  if(history.length>30) history.pop();
+  localStorage.setItem("ge-history",JSON.stringify(history));
+  
+  bInvoke.disabled=false;
+}
+
+function runOriginal(){ runPipelineFlow("orig",document.getElementById("orig-input").value,false); }
+function runStudio(){ runPipelineFlow("studio",document.getElementById("studio-input").value,true); }
+
+async function runFlash(){
+  const theme=document.getElementById("flash-theme").value.trim();
+  const res=document.getElementById("flash-results");
+  const btn=document.getElementById("flash-btn");
+  if(!theme){res.innerHTML=`<div class="error-box">✕ Enter a theme for the Flash Sheet.</div>`;return;}
+  btn.disabled=true; res.innerHTML="<div class='empty'>⬡ Designing flash matrix coordinates...</div>";
+  await new Promise(r=>setTimeout(r,1800));
+  res.innerHTML="";
+  const sty=document.getElementById("flash-style").value;
+  const styNote=sty?` [${sty.toUpperCase()} STYLE]`:"";
+  
+  for(let i=1; i<=8; i++){
+    const div=document.createElement("div"); div.className="concept-card"; div.style.borderColor=activeColor+"40";
+    div.innerHTML=`<div class="concept-num" style="color:${activeColor}">Flash Segment #0${i}</div><div class="concept-title">Design Target Option ${i}</div><div class="concept-prompt">${theme}, individual flash sheet icon, bold outlines, sticker design format, high contrast ink work${styNote}. Segment element reference coordinate v0${i} --v 6.0</div>`;
+    res.appendChild(div);
+  }
+  btn.disabled=false;
+}
+
+async function runMood(){
+  const concept=document.getElementById("mood-concept").value.trim();
+  const res=document.getElementById("mood-results");
+  const btn=document.getElementById("mood-btn");
+  if(!concept){res.innerHTML=`<div class="error-box">✕ Enter a core concept.</div>`;return;}
+  btn.disabled=true; res.innerHTML="<div class='empty'>✦ Layering mood board variants...</div>";
+  await new Promise(r=>setTimeout(r,1500));
+  res.innerHTML="";
+  const sty=document.getElementById("mood-style").value;
+  const styNote=sty?`, ${sty.toLowerCase()} style`:"";
+  const vars=[
+    "Cinematic lighting, high shadow focus, dramatic ink atmosphere",
+    "Minimalist execution, fine line precision emphasis, clean negative space",
+    "Surreal dark fantasy approach, biomechanical undercurrent texture integration",
+    "Traditional heavy ink fill saturation, classic timeless tattoo flash structure",
+    "Hyper-detailed engraving layout, fine line hatch shading layout matrix"
+  ];
+  vars.forEach((v,i)=>{
+    const div=document.createElement("div"); div.className="concept-card"; div.style.borderColor=activeColor+"40";
+    div.innerHTML=`<div class="concept-num" style="color:${activeColor}">Variant Angle 0${i+1}</div><div class="concept-title">Composition Aspect Profile</div><div class="concept-prompt">${concept}${styNote}. ${v}, professional reference mockup studio background sheet profile layout view --ar 4:5</div>`;
+    res.appendChild(div);
+  });
+  btn.disabled=false;
+}
+
+function saveVoice(){
+  artistVoice=document.getElementById("voice-input").value.trim();
+  localStorage.setItem("ge-voice",artistVoice);
+  loadVoiceTab();
+}
+function loadVoiceTab(){
+  document.getElementById("voice-input").value=artistVoice;
+  const d=document.getElementById("voice-active-display");
+  const ind=document.getElementById("voiceIndicator");
+  if(artistVoice){
+    d.innerHTML=`<div class="voice-active" style="background:${activeColor}10;border:1px dashed ${activeColor}50"><span class="lbl" style="color:${activeColor}">Active Constraints Loaded</span><p style="font-size:12px;color:#9090b0;font-family:monospace">${artistVoice}</p></div>`;
+    ind.style.display="block";
+  }else{
+    d.innerHTML=""; ind.style.display="none";
+  }
+}
+loadVoiceTab();
+
+function renderHistory(){
+  const c=document.getElementById("history-list");
+  document.getElementById("history-count").innerText=history.length+" Saved Runs";
+  if(!history.length){c.innerHTML="<div class='empty'>◉ Archive memory banks are empty.</div>";return;}
+  c.innerHTML="";
+  history.forEach(h=>{
+    const div=document.createElement("div"); div.className="history-card"; div.style.borderColor=G[h.primary]?.color+"40";
+    div.innerHTML=`<div style="display:flex;justify-content:between;font-size:10px;font-family:monospace;color:#555"><span>${h.date} — ${h.type}</span><span style="margin-left:auto;color:${G[h.primary]?.color}">${G[h.primary]?.symbol} ${h.primary}</span></div><div style="font-size:13px;font-weight:600;margin:4px 0;color:#e0e0f0">${h.concept}</div><p style="font-size:11px;color:#777;font-family:serif;font-style:italic">${h.prompt.slice(0,140)}...</p>`;
+    c.appendChild(div);
+  });
+}
+function clearHistory(){ history=[]; localStorage.removeItem("ge-history"); renderHistory(); }
+function resetTab(prefix){ document.getElementById(prefix+"-input").value=""; document.getElementById(prefix+"-chars").innerText="0 chars"; document.getElementById(prefix+"-guardian-row").innerHTML=""; document.getElementById(prefix+"-phases").innerHTML=""; document.getElementById(prefix+"-final").innerHTML=""; document.getElementById(prefix+"-error").innerHTML=""; }
+</script>
+</body>
+</html>

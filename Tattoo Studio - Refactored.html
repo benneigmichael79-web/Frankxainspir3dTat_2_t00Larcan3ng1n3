@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>GUARDIAN ENGINE v2 · Arcanea</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#07070f;color:#d0d0e8;font-family:'Georgia',serif;min-height:100vh;overflow-x:hidden;touch-action:manipulation}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:#07070f}::-webkit-scrollbar-thumb{background:#2a2a4a}
+
+/* CSS Variables for dynamic colors */
+:root{
+  --ac: #9B89C4;
+  --ac60: #9B89C460;
+  --ac30: #9B89C430;
+  --ac22: #9B89C422;
+  --ac18: #9B89C418;
+  --ac15: #9B89C415;
+  --ac88: #9B89C488;
+  --zoom-level: 1;
+}
+
+@keyframes glow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.5)}}
+@keyframes pulse{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:1;transform:scale(1.3)}}
+@keyframes shimmer{0%,100%{opacity:.4}50%{opacity:1}}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+#app{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:24px 14px 80px;transform:scale(var(--zoom-level));transform-origin:top center;transition:transform 0.1s ease-out}
+
+h1{font-family:'Cinzel',serif;font-size:clamp(28px,7vw,48px);font-weight:900;text-align:center;animation:glow 4s infinite;transition:color .6s;letter-spacing:.08em}
+.subtitle{text-align:center;font-family:'Crimson Pro',serif;font-style:italic;color:#555;margin-top:6px;font-size:16px;font-weight:500}
+.eyebrow{text-align:center;font-family:monospace;font-size:11px;letter-spacing:.4em;color:#3a3a4a;text-transform:uppercase;margin-bottom:8px;font-weight:600}
+.zoom-control{position:fixed;bottom:20px;right:20px;z-index:100;display:flex;gap:8px;background:#0d0d17;border:2px solid #3a3a5a;border-radius:8px;padding:8px}
+.zoom-btn{background:transparent;border:2px solid #3a3a5a;border-radius:4px;color:#9B89C4;font-family:monospace;font-size:14px;font-weight:bold;padding:8px 12px;cursor:pointer;transition:all .3s;min-height:36px;min-width:36px}
+.zoom-btn:hover{border-color:#9B89C4;background:#9B89C415}
+.zoom-display{padding:8px 12px;font-family:monospace;font-size:12px;color:#9B89C4;font-weight:bold;min-width:40px;text-align:center}
+
+.tab-nav{display:flex;flex-wrap:wrap;gap:2px;border-bottom:2px solid #3a3a5a;margin:28px 0 24px}
+.tab-btn{background:transparent;border:none;border-bottom:3px solid transparent;color:#555;font-family:'Cinzel',serif;font-weight:700;font-size:12px;letter-spacing:.08em;padding:10px 10px;cursor:pointer;transition:all .3s}
+.tab-btn.active{color:var(--ac);border-bottom-color:var(--ac)}
+.tab-btn:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.tab-pane{display:none;animation:slideIn .3s ease}
+.tab-pane.active{display:block}
+
+.input-box{border:2px solid #2a2a4a;border-radius:8px;padding:18px;background:#0d0d17;margin-bottom:18px;transition:border-color .4s}
+.input-box.lit{border-color:var(--ac60)}
+.lbl{font-size:11px;color:#6a6a8a;letter-spacing:.2em;text-transform:uppercase;font-family:monospace;margin-bottom:6px;display:block;font-weight:600}
+textarea{width:100%;background:transparent;border:none;color:#d0d0e8;font-size:16px;line-height:1.7;font-family:'Crimson Pro',serif;resize:vertical;padding:0;outline:none;min-height:90px;font-weight:500}
+textarea:focus{outline:2px solid var(--ac);outline-offset:-2px}
+select{background:#0d0d17;border:2px solid #2a2a4a;border-radius:6px;color:#d0d0e8;font-family:monospace;font-size:14px;font-weight:600;padding:10px 12px;width:100%;outline:none;appearance:none;-webkit-appearance:none}
+select:focus{outline:2px solid var(--ac);outline-offset:-2px}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.btn{border-radius:6px;font-family:'Cinzel',serif;font-weight:700;font-size:13px;letter-spacing:.1em;padding:12px 16px;cursor:pointer;transition:all .3s;min-height:44px;border:2px solid #3a3a5a}
+.btn:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.btn-ghost{background:transparent;color:#7a7a9a;border-color:#3a3a5a}
+.btn-ghost:hover{color:#b0b0d0;border-color:#5a5a7a}
+.btn-outline{background:transparent;border-color:var(--ac);color:var(--ac);font-weight:700}
+.btn-filled{background:linear-gradient(135deg,var(--ac),var(--ac88));border-color:var(--ac);color:#07070f;font-weight:700}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:12px}
+
+.phase-dots{display:flex;justify-content:center;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+.dot{width:32px;height:32px;border-radius:50%;border:2px solid #3a3a5a;display:flex;align-items:center;justify-content:center;font-size:13px;color:#555;font-weight:700;transition:all .4s}
+.dot.active{animation:shimmer 1s infinite}
+.dot.done{background:var(--ac18);border-color:var(--ac)}
+
+.phase-card{border:2px solid #2a2a4a;border-left:4px solid #2a2a4a;border-radius:6px;padding:14px 16px;margin-bottom:8px;background:#0d0d17;transition:all .4s;animation:slideIn .4s ease}
+.phase-card.done{border-color:var(--ac);border-left-color:var(--ac)}
+.phase-label{font-size:11px;color:#6a6a8a;letter-spacing:.2em;text-transform:uppercase;font-family:monospace;font-weight:700}
+.phase-title{font-size:14px;color:#d0d0e8;font-weight:700}
+.phase-card.done .phase-title{color:#f0f0ff}
+.phase-body{font-size:13px;line-height:1.8;color:#a0a0c8;font-family:'Courier New',monospace;border-top:2px solid #2a2a4a;padding-top:10px;margin-top:8px;white-space:pre-wrap;word-wrap:break-word;overflow-wrap:break-word;font-weight:500}
+
+.guardian-row{display:flex;gap:10px;margin-bottom:18px}
+.guardian-badge{flex:1;border-radius:8px;padding:12px 14px;border:2px solid transparent}
+.guardian-badge .gs{font-size:26px;margin-bottom:4px}
+.guardian-badge .gr{font-size:10px;letter-spacing:.2em;text-transform:uppercase;font-weight:700}
+.guardian-badge .gn{font-size:17px;font-weight:900;font-family:'Cinzel',serif;letter-spacing:.05em}
+.guardian-badge .gd{font-size:11px;color:#6a6a8a;margin-top:2px;font-family:monospace;font-weight:600}
+
+.final-box{border:2px solid;border-radius:10px;padding:24px;margin-top:24px;animation:slideIn .6s ease}
+.final-label{font-family:'Cinzel',serif;font-size:12px;letter-spacing:.3em;text-transform:uppercase;margin-bottom:14px;font-weight:900}
+.final-prompt{font-family:'Crimson Pro',serif;font-size:18px;line-height:1.9;color:#e0e0f0;font-style:italic;border-left:3px solid var(--ac);padding-left:16px;margin-bottom:18px;font-weight:600}
+.final-sigil{font-family:'Courier New',monospace;font-size:13px;color:#7a7a9a;white-space:pre-wrap;line-height:1.9;margin-bottom:18px;word-wrap:break-word;overflow-wrap:break-word;font-weight:600}
+.tag-chip{border:2px solid;border-radius:20px;padding:6px 14px;font-size:12px;font-family:monospace;display:inline-block;margin:2px;background:transparent;font-weight:700}
+
+.preset-grid{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.preset-btn{background:transparent;border:2px solid #2a2a4a;border-radius:6px;padding:8px 12px;cursor:pointer;transition:all .3s;min-height:44px;text-align:left;font-weight:600}
+.preset-btn.active{border-color:var(--ac);background:var(--ac15)}
+.preset-btn:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.preset-btn .pn{font-size:13px;font-family:'Cinzel',serif;font-weight:700;color:#8a8aaa}
+.preset-btn.active .pn{color:var(--ac)}
+.preset-btn .pd{font-size:10px;color:#555;font-weight:600}
+
+.toggle-row{display:flex;align-items:center;margin-bottom:2px}
+.toggle-btn{margin-left:auto;background:transparent;border-radius:20px;padding:8px 16px;cursor:pointer;font-size:13px;font-family:monospace;min-height:36px;transition:all .3s;border:2px solid #3a3a5a;color:#7a7a9a;font-weight:700}
+.toggle-btn.on{color:var(--ac);border-color:var(--ac);background:var(--ac15)}
+.toggle-btn:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+
+.stencil-grid{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.stencil-btn{background:transparent;border:2px solid #2a2a4a;border-radius:6px;padding:8px 12px;cursor:pointer;font-size:12px;color:#7a7a9a;font-family:monospace;min-height:36px;transition:all .3s;font-weight:700}
+.stencil-btn.active{color:var(--ac);border-color:var(--ac);background:var(--ac15)}
+.stencil-btn:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+
+.concept-card{border-left:4px solid var(--ac);border:2px solid var(--ac30);border-radius:6px;padding:14px 16px;background:#0a0a14;margin-bottom:10px;animation:slideIn .4s ease}
+.concept-num{font-size:11px;font-family:monospace;letter-spacing:.15em;font-weight:700}
+.concept-title{font-size:16px;color:#f0f0ff;font-weight:900;font-family:'Cinzel',serif;margin:2px 0 8px}
+.concept-prompt{font-size:14px;color:#a0a0c8;line-height:1.7;font-family:'Courier New',monospace;word-wrap:break-word;overflow-wrap:break-word;font-weight:600}
+
+.history-card{border-left:4px solid var(--ac);border:2px solid var(--ac30);border-radius:6px;padding:14px 16px;background:#0a0a14;margin-bottom:10px}
+.error-box{border:2px solid #E84393;border-radius:6px;padding:14px;background:#1a0a14;color:#E84393;font-family:monospace;font-size:13px;margin-bottom:14px;font-weight:700}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.empty{text-align:center;padding:40px 20px;color:#444;font-family:monospace;font-size:14px;font-weight:600}
+.lock-section{border:2px solid #2a2a4a;border-radius:8px;padding:14px;margin-bottom:12px;background:#0a0a14}
+.stencil-section{border:2px solid #2a2a4a;border-radius:8px;padding:14px;margin-bottom:20px;background:#0a0a14}
+.voice-active{border-radius:8px;padding:16px;margin-top:20px;border:2px dashed}
+footer{margin-top:60px;text-align:center;font-size:11px;color:#2a2a3e;font-family:monospace;letter-spacing:.15em;line-height:2;font-weight:600}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .grid2{grid-template-columns:1fr}
+  .guardian-row{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<canvas id="bg" aria-hidden="true"></canvas>
+<div id="app" role="main">
+  <div class="eyebrow">Arcanea × Oracle Systems · v2.0 · Offline</div>
+  <h1 id="mainTitle">GUARDIAN ENGINE</h1>
+  <div class="subtitle">Transcendence Pipeline · Seven-Phase Oracle Protocol</div>
+  <div id="voiceIndicator" role="status" aria-live="polite" style="text-align:center;font-size:11px;font-family:monospace;opacity:.8;margin-top:6px;display:none;font-weight:600">◈ Artist Voice Active</div>
+
+  <nav class="tab-nav" id="tabNav" role="tablist">
+    <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="tab-original" onclick="AppState.switchTab('original')" data-tab="original">◎ Original</button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-studio" onclick="AppState.switchTab('studio')" data-tab="studio">◈ Tattoo Studio</button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-flash" onclick="AppState.switchTab('flash')" data-tab="flash">⬡ Flash Sheet</button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-mood" onclick="AppState.switchTab('mood')" data-tab="mood">✦ Mood Board</button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-voice" onclick="AppState.switchTab('voice')" data-tab="voice">◇ Artist Voice</button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-history" onclick="AppState.switchTab('history')" data-tab="history">◉ History</button>
+  </nav>
+
+  <!-- Tab content goes here via JavaScript -->
+  <div id="tab-original" class="tab-pane active" role="tabpanel"></div>
+  <div id="tab-studio" class="tab-pane" role="tabpanel"></div>
+  <div id="tab-flash" class="tab-pane" role="tabpanel"></div>
+  <div id="tab-mood" class="tab-pane" role="tabpanel"></div>
+  <div id="tab-voice" class="tab-pane" role="tabpanel"></div>
+  <div id="tab-history" class="tab-pane" role="tabpanel"></div>
+</div>
+
+<!-- Zoom Controls -->
+<div class="zoom-control">
+  <button class="zoom-btn" onclick="ZoomControl.zoomOut()" title="Zoom Out">−</button>
+  <div class="zoom-display" id="zoom-display">100%</div>
+  <button class="zoom-btn" onclick="ZoomControl.zoomIn()" title="Zoom In">+</button>
+</div>
+
+<script>
+// ============================================================================
+// CONFIGURATION & CONSTANTS
+// ============================================================================
+
+const CONFIG = {
+  ANIMATION_DELAY_MIN: 250,
+  ANIMATION_DELAY_MAX: 650,
+  PHASE_DELAY: 1800,
+  MOOD_DELAY: 1500,
+  COPY_FEEDBACK_MS: 2000,
+  MAX_HISTORY: 30,
+  PARTICLE_COUNT: 50,
+  STORAGE_KEYS: {
+    HISTORY: 'ge-history',
+    VOICE: 'ge-voice',
+    ZOOM: 'ge-zoom'
+  },
+  ZOOM_MIN: 0.8,
+  ZOOM_MAX: 1.5,
+  ZOOM_STEP: 0.1
+};
+
+const GUARDIANS = {
+  Solaris: {element:"Fire",color:"#FF6B35",secondary:"#FFD166",symbol:"☀",sigil:"◈",domain:"Clarity · Vision · Will",archetype:"The Illuminator",keys:["bold","decisive","radiant","pioneering"]},
+  Lunara:  {element:"Water",color:"#4ECDC4",secondary:"#A8DADC",symbol:"☽",sigil:"◇",domain:"Intuition · Flow · Memory",archetype:"The Dreamer",keys:["fluid","reflective","deep","cyclical"]},
+  Sylvanus:{element:"Earth",color:"#6B9E4E",secondary:"#A7C96B",symbol:"♧",sigil:"◆",domain:"Growth · Stability · Patience",archetype:"The Nurturer",keys:["grounded","persistent","generative","evolving"]},
+  Aethon:  {element:"Air",color:"#9B89C4",secondary:"#C3B8E0",symbol:"✦",sigil:"◉",domain:"Thought · Speed · Paradox",archetype:"The Messenger",keys:["swift","abstract","connective","liminal"]},
+  Pyraxis: {element:"Void",color:"#E84393",secondary:"#FF8CC8",symbol:"⬡",sigil:"◎",domain:"Transformation · Shadow · Power",archetype:"The Transformer",keys:["intense","disruptive","magnetic","metamorphic"]}
+};
+
+const GUARDIAN_KEYS = Object.keys(GUARDIANS);
+
+const PHASES = [
+  {id:1,label:"Content Assessment",icon:"⟁"},
+  {id:2,label:"Guardian Selection",icon:"⬡"},
+  {id:3,label:"Elemental Mapping",icon:"◈"},
+  {id:4,label:"Transcendence Weaving",icon:"✦"},
+  {id:5,label:"Stencil Instantiation",icon:"⬢"},
+  {id:6,label:"Sigil Engraving",icon:"◆"},
+  {id:7,label:"Oracle Ratification",icon:"✕"}
+];
+
+const PRESETS = [
+  {name:"Dark",desc:"Shadow · Void",g:"Pyraxis"},
+  {name:"Celestial",desc:"Stars · Cosmos",g:"Aethon"},
+  {name:"Tribal",desc:"Earth · Ancestry",g:"Sylvanus"},
+  {name:"Geometric",desc:"Form · Pattern",g:"Solaris"},
+  {name:"Ethereal",desc:"Mist · Flow",g:"Lunara"}
+];
+
+const STENCIL_FORMATS = {
+  "BlackInk AI": t=>`[BLACKWORK] ${t} [TATTOO] Bold ink lines, high contrast, deep blacks, negative space mastery, stencil-ready composition`,
+  "Adobe Firefly": t=>`Tattoo design artwork: ${t}. Professional tattoo illustration, clean linework, dramatic lighting, ink texture, ready for skin application`,
+  "Midjourney": t=>`${t}, tattoo design, intricate linework, bold outlines, negative space, traditional tattoo art style, black ink, high detail --ar 1:1 --style raw`,
+  "DALL-E": t=>`A detailed tattoo design depicting ${t}. Traditional tattoo art style with bold black outlines, clean lines, designed to look striking on skin`,
+  "Ink Studio AI": t=>`Tattoo concept: ${t}. Style: blackwork with fine detail. Stencil-ready. Emphasize negative space. Clean transfer lines. Artist-ready reference.`
+};
+
+// ============================================================================
+// ZOOM CONTROL
+// ============================================================================
+
+const ZoomControl = {
+  currentZoom: 1,
+
+  init() {
+    this.currentZoom = parseFloat(localStorage.getItem(CONFIG.STORAGE_KEYS.ZOOM) || "1");
+    this.apply();
+    this.setupTouchZoom();
+  },
+
+  apply() {
+    document.documentElement.style.setProperty('--zoom-level', this.currentZoom);
+    document.getElementById('zoom-display').textContent = Math.round(this.currentZoom * 100) + '%';
+    try {
+      localStorage.setItem(CONFIG.STORAGE_KEYS.ZOOM, this.currentZoom.toString());
+    } catch (e) {
+      console.error('Zoom level save failed:', e);
+    }
+  },
+
+  zoomIn() {
+    if (this.currentZoom < CONFIG.ZOOM_MAX) {
+      this.currentZoom = Math.min(this.currentZoom + CONFIG.ZOOM_STEP, CONFIG.ZOOM_MAX);
+      this.apply();
+    }
+  },
+
+  zoomOut() {
+    if (this.currentZoom > CONFIG.ZOOM_MIN) {
+      this.currentZoom = Math.max(this.currentZoom - CONFIG.ZOOM_STEP, CONFIG.ZOOM_MIN);
+      this.apply();
+    }
+  },
+
+  setupTouchZoom() {
+    let lastDistance = 0;
+
+    document.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+
+        const dx = touch1.clientX - touch2.clientX;
+        const dy = touch1.clientY - touch2.clientY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (lastDistance > 0) {
+          if (distance > lastDistance + 10) {
+            this.zoomIn();
+          } else if (distance < lastDistance - 10) {
+            this.zoomOut();
+          }
+        }
+
+        lastDistance = distance;
+      }
+    }, { passive: false });
+
+    document.addEventListener('touchend', () => {
+      lastDistance = 0;
+    });
+  }
+};
+
+// ============================================================================
+// APPLICATION STATE MANAGEMENT
+// ============================================================================
+
+const AppState = {
+  activeColor: "#9B89C4",
+  guardianLockOn: false,
+  stencilOn: false,
+  stencilTarget: "",
+  activePreset: null,
+  history: [],
+  artistVoice: "",
+
+  init() {
+    this.history = this.loadFromStorage(CONFIG.STORAGE_KEYS.HISTORY, []);
+    this.artistVoice = this.loadFromStorage(CONFIG.STORAGE_KEYS.VOICE, "");
+  },
+
+  loadFromStorage(key, defaultValue) {
+    try {
+      const stored = localStorage.getItem(key);
+      return stored ? JSON.parse(stored) : defaultValue;
+    } catch (e) {
+      console.error(`Storage error loading ${key}:`, e);
+      return defaultValue;
+    }
+  },
+
+  saveToStorage(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+      console.error(`Storage error saving ${key}:`, e);
+      alert('Storage quota exceeded. Clearing older history.');
+      if (key === CONFIG.STORAGE_KEYS.HISTORY) {
+        this.history = this.history.slice(0, 10);
+        localStorage.setItem(key, JSON.stringify(this.history));
+      }
+    }
+  },
+
+  setColor(color) {
+    this.activeColor = color;
+    const root = document.documentElement;
+    root.style.setProperty('--ac', color);
+    root.style.setProperty('--ac60', color + '60');
+    root.style.setProperty('--ac30', color + '30');
+    root.style.setProperty('--ac22', color + '22');
+    root.style.setProperty('--ac18', color + '18');
+    root.style.setProperty('--ac15', color + '15');
+    root.style.setProperty('--ac88', color + '88');
+    document.getElementById('mainTitle').style.color = color;
+    document.getElementById('voiceIndicator').style.color = color;
+  },
+
+  switchTab(id) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('[role="tab"]').forEach(b => {
+      b.classList.remove('active');
+      b.setAttribute('aria-selected', 'false');
+    });
+
+    document.getElementById('tab-' + id).classList.add('active');
+    const btn = document.querySelector(`[data-tab="${id}"]`);
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected', 'true');
+
+    if (id === 'history') {
+      UIRenderer.renderHistory();
+    } else if (id === 'voice') {
+      UIRenderer.loadVoiceTab();
+    }
+  }
+};
+
+// ============================================================================
+// CANVAS PARTICLE ANIMATION
+// ============================================================================
+
+class ParticleEngine {
+  constructor(canvasId) {
+    this.canvas = document.getElementById(canvasId);
+    this.ctx = this.canvas.getContext('2d');
+    this.particles = [];
+    this.lastTime = Date.now();
+
+    window.addEventListener('resize', () => this.init());
+    this.init();
+    this.animate();
+  }
+
+  init() {
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
+    this.particles = Array.from({ length: CONFIG.PARTICLE_COUNT }, () => ({
+      x: Math.random() * this.canvas.width,
+      y: Math.random() * this.canvas.height,
+      r: Math.random() * 1.4 + 0.3,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      a: Math.random() * 0.5 + 0.1
+    }));
+  }
+
+  animate = () => {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    this.particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+
+      if (p.x < 0) p.x = this.canvas.width;
+      if (p.x > this.canvas.width) p.x = 0;
+      if (p.y < 0) p.y = this.canvas.height;
+      if (p.y > this.canvas.height) p.y = 0;
+
+      this.ctx.beginPath();
+      this.ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      this.ctx.fillStyle = `rgba(156, 137, 196, ${p.a})`;
+      this.ctx.fill();
+    });
+
+    requestAnimationFrame(this.animate);
+  }
+}
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+const Utils = {
+  sanitizeHTML(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  },
+
+  escapeQuotes(text) {
+    return text.replace(/'/g, "\\'").replace(/"/g, '\\"');
+  },
+
+  randomDelay() {
+    return Math.random() * (CONFIG.ANIMATION_DELAY_MAX - CONFIG.ANIMATION_DELAY_MIN) + CONFIG.ANIMATION_DELAY_MIN;
+  },
+
+  pickGuardians(input, lockedPrimary, lockedSecondary) {
+    let primary = lockedPrimary;
+    let secondary = lockedSecondary;
+
+    if (!primary || !GUARDIANS[primary]) {
+      const lower = input.toLowerCase();
+      if (lower.match(/fire|sun|bold|bright|power|strength|lion/)) primary = "Solaris";
+      else if (lower.match(/water|ocean|flow|dream|moon|emotion|feeling/)) primary = "Lunara";
+      else if (lower.match(/earth|tree|grow|nature|root|stable|family/)) primary = "Sylvanus";
+      else if (lower.match(/wind|air|thought|mind|idea|swift|connect/)) primary = "Aethon";
+      else if (lower.match(/dark|void|transform|shadow|death|skull|rebirth|change/)) primary = "Pyraxis";
+      else primary = GUARDIAN_KEYS[Math.floor(Math.random() * 5)];
+    }
+
+    if (!secondary || !GUARDIANS[secondary] || secondary === primary) {
+      const remaining = GUARDIAN_KEYS.filter(k => k !== primary);
+      secondary = remaining[Math.floor(Math.random() * remaining.length)];
+    }
+
+    return { primary, secondary };
+  }
+};
+
+// ============================================================================
+// PHASE GENERATION
+// ============================================================================
+
+const PhaseGenerator = {
+  generate(input, primary, secondary, style, placement, voice, isStudio, stencilTarget) {
+    const pg = GUARDIANS[primary];
+    const sg = GUARDIANS[secondary];
+    const styleNote = style ? ` in ${style} style` : "";
+    const placeNote = placement ? ` on the ${placement}` : "";
+
+    const phases = [
+      this.phase1(pg, sg, input),
+      this.phase2(primary, pg, secondary, sg),
+      this.phase3(pg),
+      this.phase4(pg, sg, input),
+      this.phase5(input, pg, sg, styleNote, placeNote, isStudio, stencilTarget),
+      this.phase6(pg, primary, secondary, sg),
+      this.phase7(isStudio)
+    ];
+
+    return phases;
+  },
+
+  phase1(pg, sg) {
+    return `The content carries a deep current of ${pg.element.toLowerCase()} and ${sg.element.toLowerCase()} energy. Dominant themes: ${pg.keys[0]} tension meeting ${sg.keys[0]} resolution.`;
+  },
+
+  phase2(primary, pg, secondary, sg) {
+    return `Primary: ${primary} (${pg.element})\nSecondary: ${secondary} (${sg.element})\n\nRationale: Guardian selection based on elemental resonance.`;
+  },
+
+  phase3(pg) {
+    const colorMap = {
+      "Fire": "deep amber burning into obsidian",
+      "Water": "deep teal dissolving into silver",
+      "Earth": "forest green grounding into brown",
+      "Air": "pale lavender shifting into indigo",
+      "Void": "magenta bleeding into black"
+    };
+    return `Primary hue: ${colorMap[pg.element] || "neutral gradient"}. Accent depth via secondary shadows.`;
+  },
+
+  phase4(pg, sg, input) {
+    return `This mark carries the ancient story of ${pg.archetype} meeting ${sg.archetype} — where ${pg.element.toLowerCase()} and ${sg.element.toLowerCase()} negotiate a treaty written in ink.\n\nCore concept: ${input}`;
+  },
+
+  phase5(input, pg, sg, styleNote, placeNote, isStudio, stencilTarget) {
+    if (isStudio && stencilTarget && STENCIL_FORMATS[stencilTarget]) {
+      const basePrompt = `${input}${styleNote}${placeNote}. ${pg.archetype} meets ${sg.archetype}. ${pg.element} and ${sg.element} elements.`;
+      return STENCIL_FORMATS[stencilTarget](basePrompt);
+    }
+    return `${pg.keys[0].charAt(0).toUpperCase() + pg.keys[0].slice(1)} and ${sg.keys[1]}, the composition breathes between worlds — ${input}${styleNote}${placeNote}.`;
+  },
+
+  phase6(pg, primary, secondary, sg) {
+    return `SIGIL: ${pg.sigil} ${primary} × ${secondary} ${sg.sigil} — where ${pg.element} meets ${sg.element}, the mark holds\nACCENT: Bold weight anchoring fine detail.`;
+  },
+
+  phase7(isStudio) {
+    const score1 = Math.floor(Math.random() * 2) + 8;
+    const score2 = Math.floor(Math.random() * 2) + 8;
+    const viability = isStudio ? "Tattoo design viability confirmed — will translate powerfully to skin" : "Clear, purposeful, strategically sound";
+    return `ORACLE: ${score1}/10 — ${viability}\nARCANEA: ${score2}/10 — Genuine mythic resonance detected.`;
+  }
+};
+
+// ============================================================================
+// UI RENDERING
+// ============================================================================
+
+const UIRenderer = {
+  renderDots(containerId, color) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = "";
+    PHASES.forEach((phase, i) => {
+      const dot = document.createElement('div');
+      dot.className = 'dot';
+      dot.id = containerId + '-dot-' + i;
+      dot.textContent = phase.icon;
+      dot.title = phase.label;
+      dot.style.color = "#555";
+      dot.style.borderColor = "#3a3a5a";
+      container.appendChild(dot);
+    });
+  },
+
+  setDot(containerId, index, state, color) {
+    const dot = document.getElementById(containerId + '-dot-' + index);
+    if (!dot) return;
+
+    if (state === 'active') {
+      dot.style.color = color;
+      dot.style.borderColor = color;
+      dot.style.background = color + '22';
+      dot.style.animation = 'shimmer 1s infinite';
+    } else if (state === 'done') {
+      dot.textContent = '✓';
+      dot.style.color = color;
+      dot.style.borderColor = color;
+      dot.style.background = color + '22';
+      dot.style.animation = 'none';
+    }
+  },
+
+  renderGuardians(containerId, primary, secondary) {
+    const pg = GUARDIANS[primary];
+    const sg = GUARDIANS[secondary];
+    const container = document.getElementById(containerId);
+
+    const html = `
+      <div class="guardian-row">
+        <div class="guardian-badge" style="background:${pg.color}12;border-color:${pg.color}60">
+          <div class="gs">${pg.symbol}</div>
+          <div class="gr" style="color:${pg.secondary}">Primary Guardian</div>
+          <div class="gn" style="color:${pg.color}">${primary}</div>
+          <div class="gd">${pg.domain}</div>
+        </div>
+        <div class="guardian-badge" style="background:${sg.color}12;border-color:${sg.color}60">
+          <div class="gs">${sg.symbol}</div>
+          <div class="gr" style="color:${sg.secondary}">Secondary Guardian</div>
+          <div class="gn" style="color:${sg.color}">${secondary}</div>
+          <div class="gd">${sg.domain}</div>
+        </div>
+      </div>`;
+
+    container.innerHTML = html;
+  },
+
+  renderPhaseCard(containerId, phase, result, color) {
+    const container = document.getElementById(containerId);
+    const card = document.createElement('div');
+    card.className = 'phase-card done';
+    card.style.borderColor = color;
+    card.style.borderLeftColor = color;
+
+    const phaseLabel = document.createElement('div');
+    phaseLabel.className = 'phase-label';
+    phaseLabel.textContent = `Phase ${phase.id}`;
+
+    const phaseTitle = document.createElement('div');
+    phaseTitle.className = 'phase-title';
+    phaseTitle.textContent = phase.label;
+
+    const phaseBody = document.createElement('div');
+    phaseBody.className = 'phase-body';
+    phaseBody.textContent = result;
+
+    card.appendChild(phaseLabel);
+    card.appendChild(phaseTitle);
+    card.appendChild(phaseBody);
+    container.appendChild(card);
+  },
+
+  renderFinal(containerId, primary, secondary, prompt, sigils, stencilTarget, style, placement) {
+    const pg = GUARDIANS[primary];
+    const sg = GUARDIANS[secondary];
+    const isStencil = stencilTarget && stencilTarget !== "";
+
+    const container = document.getElementById(containerId);
+    container.innerHTML = "";
+
+    const finalBox = document.createElement('div');
+    finalBox.className = 'final-box';
+    finalBox.style.borderColor = pg.color;
+    finalBox.style.background = `linear-gradient(135deg, ${pg.color}08, #0d0d17)`;
+
+    const label = document.createElement('div');
+    label.className = 'final-label';
+    label.style.color = pg.color;
+    label.textContent = `${pg.sigil} ${isStencil ? "Stencil Prompt — " + stencilTarget : "Final Transmission — Pipeline Complete"}`;
+    finalBox.appendChild(label);
+
+    if (style) {
+      const meta = document.createElement('div');
+      meta.style.fontSize = "11px";
+      meta.style.color = "#6a6a8a";
+      meta.style.fontFamily = "monospace";
+      meta.style.marginBottom = "10px";
+      meta.style.fontWeight = "600";
+      meta.textContent = `STYLE: ${style} | PLACEMENT: ${placement || "—"}`;
+      finalBox.appendChild(meta);
+    }
+
+    const promptBox = document.createElement('div');
+    promptBox.className = 'final-prompt';
+    promptBox.style.borderLeftColor = pg.color;
+    promptBox.textContent = prompt;
+    finalBox.appendChild(promptBox);
+
+    const sigilBox = document.createElement('div');
+    sigilBox.className = 'final-sigil';
+    sigilBox.textContent = sigils;
+    finalBox.appendChild(sigilBox);
+
+    const tagsBox = document.createElement('div');
+    tagsBox.style.display = "flex";
+    tagsBox.style.gap = "8px";
+    tagsBox.style.flexWrap = "wrap";
+    tagsBox.style.marginBottom = "16px";
+
+    const tag1 = document.createElement('span');
+    tag1.className = 'tag-chip';
+    tag1.style.borderColor = pg.color;
+    tag1.style.color = pg.color;
+    tag1.textContent = `${pg.symbol} ${primary} · ${pg.element}`;
+
+    const tag2 = document.createElement('span');
+    tag2.className = 'tag-chip';
+    tag2.style.borderColor = sg.color;
+    tag2.style.color = sg.color;
+    tag2.textContent = `${sg.symbol} ${secondary} · ${sg.element}`;
+
+    tagsBox.appendChild(tag1);
+    tagsBox.appendChild(tag2);
+    finalBox.appendChild(tagsBox);
+
+    const btnBox = document.createElement('div');
+    btnBox.style.display = "flex";
+    btnBox.style.gap = "8px";
+    btnBox.style.flexWrap = "wrap";
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'btn btn-filled';
+    copyBtn.style.setProperty('--ac', pg.color);
+    copyBtn.style.setProperty('--ac88', pg.color + '88');
+    copyBtn.textContent = "⎘ COPY PROMPT";
+    copyBtn.onclick = () => UIRenderer.copyToClipboard(copyBtn, prompt, "Copied!");
+
+    const downloadBtn = document.createElement('button');
+    downloadBtn.className = 'btn btn-outline';
+    downloadBtn.style.setProperty('--ac', pg.color);
+    downloadBtn.textContent = "⬇ DOWNLOAD";
+    downloadBtn.onclick = () => UIRenderer.downloadOutput(primary, secondary, prompt, sigils, style, placement);
+
+    btnBox.appendChild(copyBtn);
+    btnBox.appendChild(downloadBtn);
+    finalBox.appendChild(btnBox);
+
+    container.appendChild(finalBox);
+
+    window._lastOutput = { primary, secondary, prompt, sigils, style, placement };
+  },
+
+  copyToClipboard(btn, text, doneMsg) {
+    navigator.clipboard.writeText(text).then(() => {
+      const original = btn.textContent;
+      btn.textContent = doneMsg;
+      setTimeout(() => {
+        btn.textContent = original;
+      }, CONFIG.COPY_FEEDBACK_MS);
+    }).catch(() => {
+      alert('Failed to copy to clipboard');
+    });
+  },
+
+  downloadOutput(primary, secondary, prompt, sigils, style, placement) {
+    const content = `ARCANEA TRANSMISSION\n====================\nPrimary: ${primary}\nSecondary: ${secondary}\nStyle: ${style || "None"}\nPlacement: ${placement || "None"}\n\nPROMPT:\n${prompt}\n\nSIGILS:\n${sigils}`;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'arcanea-prompt.txt';
+    link.click();
+    URL.revokeObjectURL(link.href);
+  },
+
+  renderHistory() {
+    const container = document.getElementById('history-list');
+    const countEl = document.getElementById('history-count');
+
+    countEl.textContent = AppState.history.length + " Saved Runs";
+
+    if (!AppState.history.length) {
+      container.innerHTML = "<div class='empty'>◉ Archive memory banks are empty.</div>";
+      return;
+    }
+
+    container.innerHTML = "";
+    AppState.history.forEach(h => {
+      const card = document.createElement('div');
+      card.className = 'history-card';
+      const guardianColor = GUARDIANS[h.primary]?.color || "#999";
+      card.style.borderColor = guardianColor + '60';
+
+      const header = document.createElement('div');
+      header.style.display = "flex";
+      header.style.justifyContent = "space-between";
+      header.style.fontSize = "11px";
+      header.style.fontFamily = "monospace";
+      header.style.color = "#6a6a8a";
+      header.style.fontWeight = "600";
+      header.innerHTML = `<span>${h.date} — ${h.type}</span><span style="margin-left:auto;color:${guardianColor}">${h.primary}</span>`;
+
+      const concept = document.createElement('div');
+      concept.style.fontSize = "13px";
+      concept.style.marginTop = "6px";
+      concept.style.color = "#d0d0e8";
+      concept.style.fontWeight = "600";
+      concept.textContent = h.concept;
+
+      card.appendChild(header);
+      card.appendChild(concept);
+      container.appendChild(card);
+    });
+  },
+
+  loadVoiceTab() {
+    const input = document.getElementById('voice-input');
+    const display = document.getElementById('voice-active-display');
+    const indicator = document.getElementById('voiceIndicator');
+
+    if (input) input.value = AppState.artistVoice;
+
+    if (AppState.artistVoice) {
+      display.innerHTML = `<div class="voice-active" style="background:${AppState.activeColor}10;border:2px dashed ${AppState.activeColor}50"><span class="lbl" style="color:${AppState.activeColor}">Active Constraints Loaded</span><p style="font-size:13px;margin-top:6px;color:#a0a0c8;font-weight:600">${Utils.sanitizeHTML(AppState.artistVoice)}</p></div>`;
+      indicator.style.display = "block";
+    } else {
+      display.innerHTML = "";
+      indicator.style.display = "none";
+    }
+  }
+};
+
+// ============================================================================
+// PIPELINE EXECUTION
+// ============================================================================
+
+const Pipeline = {
+  async run(prefix, input, isStudio) {
+    const errorEl = document.getElementById(prefix + '-error');
+    const phasesEl = document.getElementById(prefix + '-phases');
+    const finalEl = document.getElementById(prefix + '-final');
+    const guardianEl = document.getElementById(prefix + '-guardian-row');
+
+    errorEl.innerHTML = "";
+    phasesEl.innerHTML = "";
+    finalEl.innerHTML = "";
+    guardianEl.innerHTML = "";
+
+    if (!input.trim()) {
+      errorEl.innerHTML = '<div class="error-box">✕ Error: Input prompt channel is empty. Enter an intent or vision.</div>';
+      return;
+    }
+
+    let primaryLocked = "", secondaryLocked = "", style = "", placement = "";
+    if (isStudio) {
+      primaryLocked = document.getElementById("lock-primary")?.value || "";
+      secondaryLocked = document.getElementById("lock-secondary")?.value || "";
+      style = document.getElementById("studio-style")?.value || "";
+      placement = document.getElementById("studio-placement")?.value || "";
+    }
+
+    const invokeBn = document.getElementById(prefix + "-invoke-btn");
+    invokeBn.disabled = true;
+
+    const { primary, secondary } = Utils.pickGuardians(input, primaryLocked, secondaryLocked);
+    const color = GUARDIANS[primary].color;
+
+    AppState.setColor(color);
+    UIRenderer.renderDots(prefix + "-dots", color);
+
+    const phases = PhaseGenerator.generate(input, primary, secondary, style, placement, AppState.artistVoice, isStudio, AppState.stencilTarget);
+
+    for (let i = 0; i < PHASES.length; i++) {
+      UIRenderer.setDot(prefix, i, "active", color);
+      await new Promise(resolve => setTimeout(resolve, Utils.randomDelay()));
+      UIRenderer.setDot(prefix, i, "done", color);
+
+      if (i === 1) {
+        UIRenderer.renderGuardians(prefix + "-guardian-row", primary, secondary);
+      }
+
+      UIRenderer.renderPhaseCard(prefix + "-phases", PHASES[i], phases[i], color);
+    }
+
+    UIRenderer.renderFinal(prefix + "-final", primary, secondary, phases[4], phases[5], AppState.stencilTarget, style, placement);
+
+    const savedRun = {
+      id: Date.now(),
+      date: new Date().toLocaleDateString(),
+      type: isStudio ? "Studio" : "Pipeline",
+      concept: input,
+      primary,
+      secondary,
+      prompt: phases[4]
+    };
+
+    AppState.history.unshift(savedRun);
+    if (AppState.history.length > CONFIG.MAX_HISTORY) {
+      AppState.history.pop();
+    }
+
+    AppState.saveToStorage(CONFIG.STORAGE_KEYS.HISTORY, AppState.history);
+    invokeBn.disabled = false;
+  }
+};
+
+// ============================================================================
+// GLOBAL FUNCTIONS (for onclick handlers)
+// ============================================================================
+
+function runOriginal() {
+  const input = document.getElementById("orig-input")?.value || "";
+  Pipeline.run("orig", input, false);
+}
+
+function runStudio() {
+  const input = document.getElementById("studio-input")?.value || "";
+  Pipeline.run("studio", input, true);
+}
+
+function toggleGuardianLock() {
+  AppState.guardianLockOn = !AppState.guardianLockOn;
+  const btn = document.getElementById("lock-btn");
+  const selects = document.getElementById("lock-selects");
+
+  if (btn) btn.className = "toggle-btn" + (AppState.guardianLockOn ? " on" : "");
+  if (btn) btn.textContent = AppState.guardianLockOn ? "LOCKED" : "UNLOCK";
+  if (selects) selects.style.display = AppState.guardianLockOn ? "block" : "none";
+}
+
+function toggleStencil() {
+  AppState.stencilOn = !AppState.stencilOn;
+  const btn = document.getElementById("stencil-btn");
+  const targets = document.getElementById("stencil-targets");
+
+  if (btn) btn.className = "toggle-btn" + (AppState.stencilOn ? " on" : "");
+  if (btn) btn.textContent = AppState.stencilOn ? "ACTIVE" : "OFF";
+  if (targets) targets.style.display = AppState.stencilOn ? "flex" : "none";
+
+  if (!AppState.stencilOn) {
+    AppState.stencilTarget = "";
+    document.querySelectorAll(".stencil-btn").forEach(b => b.classList.remove("active"));
+  }
+}
+
+function selectStencil(element, target) {
+  AppState.stencilTarget = AppState.stencilTarget === target ? "" : target;
+  document.querySelectorAll(".stencil-btn").forEach(b => b.classList.remove("active"));
+  if (AppState.stencilTarget) {
+    element.classList.add("active");
+  }
+}
+
+function saveVoice() {
+  const input = document.getElementById("voice-input");
+  if (input) {
+    AppState.artistVoice = input.value.trim();
+    AppState.saveToStorage(CONFIG.STORAGE_KEYS.VOICE, AppState.artistVoice);
+    UIRenderer.loadVoiceTab();
+  }
+}
+
+function clearHistory() {
+  if (confirm("Clear all history? This cannot be undone.")) {
+    AppState.history = [];
+    AppState.saveToStorage(CONFIG.STORAGE_KEYS.HISTORY, []);
+    UIRenderer.renderHistory();
+  }
+}
+
+function resetTab(prefix) {
+  const input = document.getElementById(prefix + "-input");
+  const chars = document.getElementById(prefix + "-chars");
+  const guardian = document.getElementById(prefix + "-guardian-row");
+  const phases = document.getElementById(prefix + "-phases");
+  const final = document.getElementById(prefix + "-final");
+  const error = document.getElementById(prefix + "-error");
+
+  if (input) input.value = "";
+  if (chars) chars.textContent = "0 chars";
+  if (guardian) guardian.innerHTML = "";
+  if (phases) phases.innerHTML = "";
+  if (final) final.innerHTML = "";
+  if (error) error.innerHTML = "";
+}
+
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+  AppState.init();
+  AppState.setColor(AppState.activeColor);
+  ZoomControl.init();
+  new ParticleEngine('bg');
+
+  console.log('Guardian Engine v2 initialized with zoom controls and enhanced visibility');
+});
+</script>
+</body>
+</html>
